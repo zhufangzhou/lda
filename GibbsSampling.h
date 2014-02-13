@@ -23,6 +23,8 @@ class GibbsSampling: public LdaBase {
 		GibbsSampling(string path, int k, int t, int burn_in, int sample_lag, double alpha, double beta);
 		~GibbsSampling();
 		void LearnTopics();	
+		double* getPhi();
+		double* getTheta();
 };
 
 

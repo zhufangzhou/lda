@@ -1,14 +1,10 @@
 #include "GibbsSampling.h"
 #include "util.h"
 
-GibbsSampling::GibbsSampling() {
-
-}
-
 GibbsSampling::GibbsSampling(string path, int k, int t, int burn_in, int sample_lag, double alpha, double beta):LdaBase(path, k, t, alpha, beta) {
-	this->BURN_IN = burn_in;
-	this->SAMPLE_LAG = sample_lag;
-	this->tokens = 0;
+	BURN_IN = burn_in;
+	SAMPLE_LAG = sample_lag;
+	tokens = 0;
 }
 
 GibbsSampling::~GibbsSampling() {
@@ -36,22 +32,22 @@ void GibbsSampling::init() {
 	srand((unsigned)time(0));
 
 	// count how many tokens in the these documents
-	for(int i = 0; i < this->NNZ; i++) this->tokens += (int)pr[i];
+	for(int i = 0; i < NNZ; i++) tokens += (int)pr[i];
 
-	this->wd = new int[this->tokens];
-	this->doc = new int[this->tokens];
-	this->z = new int[this->tokens];
+	wd = new int[tokens];
+	doc = new int[tokens];
+	z = new int[tokens];
 
-	this->p = new double[this->K];
+	p = new double[K];
 
 	k = 0;
-	for(d = 0; d < this->D; d++) {
+	for(d = 0; d < D; d++) {
 		for(int i = jc[d]; i < jc[d+1]; i++) {
 			w = ir[i];
 			x = (int)pr[i];
 			for(int j = 0; j < x; j++) {
-				this->wd[k] = w;
-				this->doc[k] = d;
+				wd[k] = w;
+				doc[k] = d;
 				k++;
 			}
 		}
@@ -59,15 +55,15 @@ void GibbsSampling::init() {
 
 	srand((unsigned)time(0));
 	
-	for(int i = 0; i < this->tokens; i++) {
+	for(int i = 0; i < tokens; i++) {
 		// random pick a topic from 0-K
-		topic = rand() % this->K;
+		topic = rand() % K;
 		w = wd[i];
 		d = doc[i];
 
 		z[i] = topic;
-		phi[w*this->K + topic]++;
-		theta[d*this->K + topic]++;
+		phi[w*K + topic]++;
+		theta[d*K + topic]++;
 		phitot[topic]++;
 		thetatot[d]++;
 	}
@@ -77,38 +73,38 @@ void GibbsSampling::init() {
 /* token: index of the sampling word*/
 int GibbsSampling::sampleTopic(int token) {
 	int topic, w, d;
-	topic = this->z[token];
-	w = this->wd[token];
-	d = this->doc[token];
+	topic = z[token];
+	w = wd[token];
+	d = doc[token];
 
 	// decrement counts and sums of this token for the current topic
-	this->phi[w*this->K+topic]--;
-	this->phitot[topic]--;
-	this->theta[d*this->K+topic]--;
-	this->thetatot[d]--;
+	phi[w*K+topic]--;
+	phitot[topic]--;
+	theta[d*K+topic]--;
+	thetatot[d]--;
 	
-	for(int k = 0; k < this->K; k++) {
+	for(int k = 0; k < K; k++) {
 		// full conditional
-		this->p[k] = (this->phi[w*this->K+k]+this->BETA) / (this->phitot[k]+this->WBETA) * (this->theta[d*this->K+k]+this->ALPHA);
+		p[k] = (phi[w*K+k]+BETA) / (phitot[k]+WBETA) * (theta[d*K+k]+ALPHA);
 	}
 	
 
 	// cumulate the prob
-	for(int k = 1; k < this->K; k++) this->p[k] += this->p[k-1];
+	for(int k = 1; k < K; k++) p[k] += p[k-1];
 
 	// generate a random number from 0-sum(p)
-	double r = (rand() / (double)(RAND_MAX)) * this->p[this->K-1];
+	double r = (rand() / (double)(RAND_MAX)) * p[K-1];
 
 	// index the topic in the cumulted prob array
-	for(topic = 0; topic < this->K; topic++) {
-		if(r < this->p[topic]) break;
+	for(topic = 0; topic < K; topic++) {
+		if(r < p[topic]) break;
 	}
 
 	// increment counts and sums of this token for the new sampled topic
-	this->phi[w*this->K+topic]++;
-	this->phitot[topic]++;
-	this->theta[d*this->K+topic]++;
-	this->thetatot[d]++;
+	phi[w*K+topic]++;
+	phitot[topic]++;
+	theta[d*K+topic]++;
+	thetatot[d]++;
 	
 	return topic;
 }
@@ -120,26 +116,60 @@ void GibbsSampling::LearnTopics() {
 	init();
 
 	/* begin sample */
-	for(int t = 0; t < this->T; t++) {
+	for(int t = 0; t < T; t++) {
 		
 		// calculate perplexity
 		if((t % 10 == 0) && (t != 0)) {
 			perplexity = 0.0;
-			for(int i = 0; i < this->tokens; i++) {
-				w = this->wd[i];
-				d = this->doc[i];
+			for(int i = 0; i < tokens; i++) {
+				w = wd[i];
+				d = doc[i];
 				totprob = 0.0;
-				for(int k = 0; k < this->K; k++) {
-					totprob += (this->phi[w*this->K + k]+this->BETA) / (this->phitot[k]+this->WBETA) * (this->theta[d*this->K + k]+this->ALPHA) / (this->thetatot[d]+this->KALPHA);
+				for(int k = 0; k < K; k++) {
+					totprob += (phi[w*K+k]+BETA) / (phitot[k]+WBETA) * (theta[d*K+k]+ALPHA) / (thetatot[d]+KALPHA);
 				}
 				perplexity -= log(totprob);
 			}
-			printf("Iteration %d of %d:\t%.5lf\n", t, this->T, exp(perplexity/this->tokens));
+			printf("Iteration %d of %d:\t%.5lf\n", t, T, exp(perplexity/tokens));
 		}
 
-		for(int i = 0; i < this->tokens; i++) {
+		for(int i = 0; i < tokens; i++) {
 			topic = sampleTopic(i);
 			z[i] = topic;
 		}
 	}
+
+	ParameterSet = true;
+}
+
+double* GibbsSampling::getTheta() {
+	double *p_theta = new double[W*K];
+
+	if(!ParameterSet) {
+		printf("Please call LearnTopic() first.\n");
+		return NULL;
+	}
+
+	for(int w = 0; w < W; w++) {
+		for(int k = 0; k < K; k++) {
+			p_theta[w*K+k] = (phi[w*K+k]+BETA) / (phitot[k]+WBETA);
+		}
+	}
+	return p_theta;
+}
+
+double* GibbsSampling::getPhi() {
+	double *p_phi = new double[D*K];
+	
+	if(!ParameterSet) {
+		printf("Please call LearnTopic() first.\n");
+		return NULL;
+	}
+
+	for(int d = 0; d < D; d++) {
+		for(int k = 0; k < K; k++) {
+			p_phi[d*K+k] = (theta[d*K+k]+ALPHA) / (thetatot[d]+KALPHA);
+		}
+	}
+	return p_phi;
 }

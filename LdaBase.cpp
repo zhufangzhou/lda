@@ -4,16 +4,14 @@
 /*
  * Constructors
  */
-LdaBase::LdaBase() {
-}
-
 LdaBase::LdaBase(string path, int k, int t, double alpha, double beta) {
 	this->path = path;
-	this->K = k;
-	this->T = t;
-	this->ALPHA = alpha;
-	this->BETA = beta;
+	K = k;
+	T = t;
+	ALPHA = alpha;
+	BETA = beta;
 
+	ParameterSet = false;
 	ReadData(path);
 }
 
@@ -40,6 +38,10 @@ LdaBase::~LdaBase() {
 	if(theta != NULL) {
 		delete theta;
 		theta = NULL;
+	}
+	if(thetatot != NULL) {
+		delete thetatot;
+		thetatot = NULL;
 	}
 	if(phi != NULL) {
 		delete phi;
@@ -69,8 +71,8 @@ void LdaBase::ReadData(string path) {
 	
 	pch = strtok(line, " ");
 	if((pch != NULL) && (atoi(pch) != 0)) {
-		this->D = atoi(pch);
-		printf("Documents #: %d\n", this->D);
+		D = atoi(pch);
+		printf("Documents #: %d\n", D);
 	} else {
 		fprintf(stderr, "**********File header error.**********\n");
 		exit(1);
@@ -78,61 +80,61 @@ void LdaBase::ReadData(string path) {
 
 	pch = strtok(NULL, " ");
 	if((pch != NULL) && (atoi(pch) != 0)) {
-		this->W = atoi(pch);
-		printf("Vocabulary #: %d\n", this->W);
+		W = atoi(pch);
+		printf("Vocabulary #: %d\n", W);
 	} else {
 		fprintf(stderr, "**********File header error.**********\n");
 	}
 
 	pch = strtok(NULL, " ");
 	if((pch != NULL) && (atoi(pch) != 0)) {
-		this->NNZ = atoi(pch);
-		printf("NNZ #: %d\n", this->NNZ);
+		NNZ = atoi(pch);
+		printf("NNZ #: %d\n", NNZ);
 	} else {
 		fprintf(stderr, "**********File header error.**********\n");
 	}
 
 	if(this->NNZ == 0) fprintf(stderr, "Empty file.\n");	
 
-	this->WBETA = this->W * this->BETA;
-	this->ALPHA = this->K * this->ALPHA;
+	WBETA = W * BETA;
+	ALPHA = K * ALPHA;
 
 	// allocate free space to parameters
-	this->phitot = new double[this->K];
-	this->phi = new double[this->K * this->W];
-	memset(this->phitot, 0, sizeof(double)*this->K);
-	memset(this->phi, 0, sizeof(double)*this->K*this->W);
+	phitot = new double[K];
+	phi = new double[K*W];
+	memset(phitot, 0, sizeof(double)*K);
+	memset(phi, 0, sizeof(double)*K*W);
 
-	this->thetatot = new double[this->D];
-	this->theta = new double[this->D * this->K];
-	memset(this->thetatot, 0, sizeof(double)*this->D);
-	memset(this->theta, 0, sizeof(double)*this->D*this->K);
+	thetatot = new double[D];
+	theta = new double[D*K];
+	memset(thetatot, 0, sizeof(double)*D);
+	memset(theta, 0, sizeof(double)*D*K);
 
-	this->jc = new int[this->D + 1];
-	this->ir = new int[this->NNZ];
-	this->pr = new double[this->NNZ];
+	jc = new int[D+1];
+	ir = new int[NNZ];
+	pr = new double[NNZ];
 
 	nnz = 0;
-	for(int d = 0; d < this->D; d++) {
-		this->jc[d] = nnz;
+	for(int d = 0; d < D; d++) {
+		jc[d] = nnz;
 		if(fgets(line, sizeof(line), fp) == NULL) break;
 		pch = strtok(line, " ");
 		if((pch != NULL) && (atoi(pch) != 0)) {
-			this->ir[nnz] = atoi(pch) - 1;
+			ir[nnz] = atoi(pch) - 1;
 			pch = strtok(NULL, " ");
-			this->pr[nnz] = atof(pch);
+			pr[nnz] = atof(pch);
 			nnz++;
 		}
 
 		while((pch != NULL) && (atoi(pch) != 0)) {
 			pch = strtok(NULL, " ");
 			if((pch != NULL) && (atoi(pch) != 0)) {
-				this->ir[nnz] = atoi(pch) - 1;
+				ir[nnz] = atoi(pch) - 1;
 				pch = strtok(NULL, " ");
-				this->pr[nnz] = atof(pch);
+				pr[nnz] = atof(pch);
 				nnz++;
 			}
 		}
 	}
-	this->jc[this->D] = nnz;
+	jc[D] = nnz;
 }

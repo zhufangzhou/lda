@@ -24,15 +24,18 @@ class LdaBase {
 		double *theta, *thetatot;
 		double *phi, *phitot;
 
+		bool ParameterSet;							// default false, set true after call learnTopics()
+
 		string path;
 
 		// Functions
 		void ReadData(string path);
 	public:
-		LdaBase();
 		LdaBase(string path, int K, int T, double alpha, double beta);
 		~LdaBase();
 		virtual void LearnTopics() = 0;
+		virtual double* getTheta() = 0;
+		virtual double* getPhi() = 0;
 };
 
 #endif
