@@ -15,6 +15,7 @@ class GibbsSampling: public LdaBase {
 		int *doc;
 
 		int tokens;									// number of tokens in the dataset
+		double *p;
 		void init();								// initialize Markov chain
 		int sampleTopic(int token);					// sample a topic with other fixed
 	public:
