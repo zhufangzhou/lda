@@ -1,0 +1,52 @@
+#include "util.h"
+
+/*
+ * Class myTimer
+ */
+myTimer::myTimer() {
+	counts = 0;
+}
+
+void myTimer::start() {
+	if(counts != 0)  {
+		printf("Opeartion failed.\n");
+		return;
+	}
+	counts++;
+	v_start = clock();
+}
+
+void myTimer::end() {
+	if(counts != 1) {
+		printf("Operation failed.\n");
+		return;
+	}
+	counts++;
+	v_end = clock();
+}
+
+double myTimer::getTime() {
+	return ((double)(v_end - v_start) / CLOCKS_PER_SEC);
+}
+
+//==========================================================================
+
+/*
+ * From NIST Handbook of Mathematical Functions, using formula 5.11.2
+ */
+
+double digamma(double x) {
+	double y = 1.0 / (x*x);
+	return log(x) - 0.5/x - y*(0.08333333333333333333-y*(-0.00833333333333333333-y*(0.00396825396825396825+y*0.00416666666666666667)));
+}
+
+/*
+ * return log(a+b)
+ */
+double log_sum(double log_a, double log_b) {
+	if(log_a == 0) return log_b;
+	else if(log_b == 0) return log_a;
+	else {
+		return log_b + log(1 + exp(log_a - log_b));
+	}
+}

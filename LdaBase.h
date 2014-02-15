@@ -19,19 +19,21 @@ class LdaBase {
 		int *jc;
 		double *pr;
 
+		int tokens;								// number of tokens in the dataset
+
 		double *mu;
 		// sufficient statistics
 		double *theta, *thetatot;
 		double *phi, *phitot;
 
-		bool ParameterSet;							// default false, set true after call learnTopics()
+		bool ParameterSet;						// default false, set true after call learnTopics()
 
 		string path;
 
 		// Functions
 		void ReadData(string path);
 	public:
-		LdaBase(string path, int K, int T, double alpha, double beta);
+		LdaBase(string path, int k, int t, double alpha, double beta);
 		~LdaBase();
 		virtual void LearnTopics() = 0;
 		virtual double* getTheta() = 0;

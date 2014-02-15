@@ -1,10 +1,14 @@
 #include "GibbsSampling.h"
 #include "util.h"
 
-GibbsSampling::GibbsSampling(string path, int k, int t, int burn_in, int sample_lag, double alpha, double beta):LdaBase(path, k, t, alpha, beta) {
+GibbsSampling::GibbsSampling(string path, int k, int t, int burn_in/*, int sample_lag*/, double alpha, double beta):LdaBase(path, k, t, alpha, beta) {
 	BURN_IN = burn_in;
-	SAMPLE_LAG = sample_lag;
+//	SAMPLE_LAG = sample_lag;
 	tokens = 0;
+	z = NULL;
+	wd = NULL;
+	doc = NULL;
+	p = NULL;
 }
 
 GibbsSampling::~GibbsSampling() {
@@ -28,6 +32,17 @@ GibbsSampling::~GibbsSampling() {
 
 void GibbsSampling::init() {
 	int d, w, x, k, topic;
+
+	// allocate free space to parameters
+	phitot = new double[K];
+	phi = new double[K*W];
+	memset(phitot, 0, sizeof(double)*K);
+	memset(phi, 0, sizeof(double)*K*W);
+
+	thetatot = new double[D];
+	theta = new double[D*K];
+	memset(thetatot, 0, sizeof(double)*D);
+	memset(theta, 0, sizeof(double)*D*K);
 
 	srand((unsigned)time(0));
 
@@ -112,6 +127,9 @@ int GibbsSampling::sampleTopic(int token) {
 void GibbsSampling::LearnTopics() {
 	int topic, w, d;
 	double perplexity, totprob;
+	myTimer *tm = new myTimer();
+
+	tm->start();
 	/* initialize Markov chain */
 	init();
 
@@ -139,6 +157,8 @@ void GibbsSampling::LearnTopics() {
 		}
 	}
 
+	tm->end();
+	printf("Learning finished. Using time %.3lf seconds.\n", tm->getTime());
 	ParameterSet = true;
 }
 

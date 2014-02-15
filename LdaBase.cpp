@@ -12,6 +12,16 @@ LdaBase::LdaBase(string path, int k, int t, double alpha, double beta) {
 	BETA = beta;
 
 	ParameterSet = false;
+	tokens = 0;
+
+	phi = NULL;
+	theta = NULL;
+	phitot = NULL;
+	thetatot = NULL;
+	mu = NULL;
+	ir = NULL;
+	jc = NULL;
+	pr = NULL;
 	ReadData(path);
 }
 
@@ -99,16 +109,6 @@ void LdaBase::ReadData(string path) {
 	WBETA = W * BETA;
 	ALPHA = K * ALPHA;
 
-	// allocate free space to parameters
-	phitot = new double[K];
-	phi = new double[K*W];
-	memset(phitot, 0, sizeof(double)*K);
-	memset(phi, 0, sizeof(double)*K*W);
-
-	thetatot = new double[D];
-	theta = new double[D*K];
-	memset(thetatot, 0, sizeof(double)*D);
-	memset(theta, 0, sizeof(double)*D*K);
 
 	jc = new int[D+1];
 	ir = new int[NNZ];
