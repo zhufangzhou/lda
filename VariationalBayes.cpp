@@ -4,7 +4,6 @@
 VariationalBayes::VariationalBayes(string path, int k, int t, double alpha, double beta, double em_converged, double var_converged):LdaBase(path, k, t, alpha, beta){
 	p_log_phi = NULL;
 	p_theta = NULL;
-	p_theta_tot = NULL;
 	var_gamma = NULL;
 	var_digamma = NULL;
 	var_phi = NULL;
@@ -25,10 +24,6 @@ VariationalBayes::~VariationalBayes() {
 	if(p_theta != NULL) {
 		delete p_theta;
 		p_theta = NULL;
-	}
-	if(p_theta_tot != NULL) {
-		delete p_theta_tot;
-		p_theta_tot = NULL;
 	}
 	if(var_gamma != NULL) {
 		delete var_gamma;
@@ -61,8 +56,6 @@ void VariationalBayes::init() {
 	memset(p_log_phi, 0, sizeof(double)*K*W);
 	p_theta = new double[K*D];
 	memset(p_theta, 0, sizeof(double)*K*D);
-	p_theta_tot = new double[D];
-	memset(p_theta_tot, 0, sizeof(double)*D);
 	doc_len = new int[D];
 	memset(doc_len, 0, sizeof(int)*D);
 
@@ -199,11 +192,10 @@ double VariationalBayes::variational_inference(int d) {
 
 	/* recover theta using gamma */
 	var_digamma_sum = 0.0;
-	p_theta_tot[d] = 0.0;
-	for(int k = 0; k < K; k++) var_digamma_sum += var_digamma[k];
+	for(int k = 0; k < K; k++) var_digamma_sum += var_gamma[d*K+k];
+	var_digamma_sum = digamma(var_digamma_sum);
 	for(int k = 0; k < K; k++) {
 		p_theta[d*K+k] = exp(var_digamma[k] - var_digamma_sum);
-		p_theta_tot[d] += p_theta[d*K+k];
 	}
 	
 	return likelihood;
@@ -257,7 +249,7 @@ void VariationalBayes::LearnTopics() {
 					x = pr[i];
 					mutot = 0.0;
 					for(int k = 0; k < K; k++) {
-						mutot += exp(p_log_phi[w*K+k])*p_theta[d*K+k]/p_theta_tot[d];
+						mutot += exp(p_log_phi[w*K+k])*p_theta[d*K+k];
 					}
 					perplexity -= (x*log(mutot));	
 				}

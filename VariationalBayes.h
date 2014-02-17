@@ -9,7 +9,7 @@ class VariationalBayes : public LdaBase {
 		// variables
 		double *p_log_phi;								// log(phi) in original LDA model
 		double *p_theta;								// theta in original LDA model, get from gamma
-		double *p_theta_tot;
+		//double *p_theta_tot;
 		double *var_gamma;								// gamma in variational distribution
 		double *var_digamma;							// digamma	
 		double *var_phi;								// phi in variational distribution
