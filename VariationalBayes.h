@@ -9,8 +9,8 @@ class VariationalBayes : public LdaBase {
 		// variables
 		double *p_log_phi;								// log(phi) in original LDA model
 		double *p_theta;								// theta in original LDA model, get from gamma
+		double *p_theta_tot;
 		double *var_gamma;								// gamma in variational distribution
-		double *var_old_gamma;							// gamma in variational distribution(last iteration)
 		double *var_digamma;							// digamma	
 		double *var_phi;								// phi in variational distribution
 
@@ -20,10 +20,12 @@ class VariationalBayes : public LdaBase {
 
 		double EM_CONVERGED;
 		double VAR_CONVERGED;
+		int VAR_MAX_ITER;
 
 		// functions 
 		void init();	
 		void mle();
+		double compute_likelihood(int d);
 		double variational_inference(int d);
 	public:
 		VariationalBayes(string path, int k, int t, double alpha, double beta, double em_converged, double var_converged);

@@ -26,6 +26,7 @@ void myTimer::end() {
 }
 
 double myTimer::getTime() {
+	counts = 0;
 	return ((double)(v_end - v_start) / CLOCKS_PER_SEC);
 }
 
@@ -34,19 +35,26 @@ double myTimer::getTime() {
 /*
  * From NIST Handbook of Mathematical Functions, using formula 5.11.2
  */
-
+/*
 double digamma(double x) {
 	double y = 1.0 / (x*x);
 	return log(x) - 0.5/x - y*(0.08333333333333333333-y*(-0.00833333333333333333-y*(0.00396825396825396825+y*0.00416666666666666667)));
+}*/
+double digamma(double x) {
+	double y;
+	x += 6;
+	y = 1.0 / (x*x);
+	return log(x) - 0.5/x - y*(0.08333333333333333333-y*(-0.00833333333333333333-y*(0.00396825396825396825+y*0.00416666666666666667))) - 1/(x-1) - 1/(x-2) - 1/(x-3) - 1/(x-4) - 1/(x-5) - 1/(x-6);
 }
+
 
 /*
  * return log(a+b)
  */
 double log_sum(double log_a, double log_b) {
-	if(log_a == 0) return log_b;
-	else if(log_b == 0) return log_a;
-	else {
+	if(log_a < log_b) {
 		return log_b + log(1 + exp(log_a - log_b));
+	} else {
+		return log_a + log(1 + exp(log_b - log_a));
 	}
 }

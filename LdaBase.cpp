@@ -107,7 +107,7 @@ void LdaBase::ReadData(string path) {
 	if(this->NNZ == 0) fprintf(stderr, "Empty file.\n");	
 
 	WBETA = W * BETA;
-	ALPHA = K * ALPHA;
+	KALPHA = K * ALPHA;
 
 
 	jc = new int[D+1];
