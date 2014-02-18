@@ -58,3 +58,34 @@ double log_sum(double log_a, double log_b) {
 		return log_a + log(1 + exp(log_b - log_a));
 	}
 }
+
+/*
+ * quick_sort (descend order)
+ */
+void quick_sort(double *value, int *seq, int left, int right) {
+	int pivot, l = left+1, r = right-1, tmp, mid;
+	if(right-left <= 1) return ;
+	else {
+		/* swap middle to left and choose middle as pivot */
+		mid = (left + right) / 2;
+		tmp = seq[mid];
+		seq[mid] = seq[left];
+		seq[left] = tmp;
+
+		pivot = seq[left];
+		while(l <= r) {
+			while(l<=r && value[seq[l]] > value[pivot]) l++;
+			while(l<=r && value[seq[r]] < value[pivot]) r--;
+			if(l<=r) {
+				tmp = seq[l];
+				seq[l] = seq[r];
+				seq[r] = tmp;
+			}
+		}
+		tmp = seq[r];
+		seq[r] = seq[left];
+		seq[left] = tmp;
+		quick_sort(value, seq, left, r);
+		quick_sort(value, seq, r+1, right);
+	}
+}

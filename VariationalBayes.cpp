@@ -13,7 +13,7 @@ VariationalBayes::VariationalBayes(string path, int k, int t, double alpha, doub
 	EM_CONVERGED = em_converged;
 	VAR_CONVERGED = var_converged;
 
-	VAR_MAX_ITER = 20;
+	VAR_MAX_ITER = 10;
 }
 
 VariationalBayes::~VariationalBayes() {
@@ -260,13 +260,19 @@ void VariationalBayes::LearnTopics() {
 		if(iter >= 100) break;
 	}
 	tm->end();
-	printf("\tIteration: %d last %lf second.\n", iter, tm->getTime());
+	printf("\tIteration: %d last %lf seconds.\n", iter, tm->getTime());
 }
 
 double* VariationalBayes::getPhi() {
-	return 0;
+	double* p_phi = new double[W*K];
+	for(int w = 0; w < W; w++) {
+		for(int k = 0; k < K; k++) {
+			p_phi[w*K+k] = exp(p_log_phi[w*K+k]);
+		}
+	}
+	return p_phi;
 }
 
 double* VariationalBayes::getTheta() {
-	return 0;
+	return p_theta;
 }

@@ -31,7 +31,8 @@ class myTimer {
 
 double log_sum(double log_a, double log_b);
 double digamma(double x);
-
+/* sort in descend order, a little bit different from common quick_sort */
+void quick_sort(double *value, int *seq, int left, int right);
 
 
 #endif
