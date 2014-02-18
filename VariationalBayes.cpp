@@ -261,10 +261,18 @@ void VariationalBayes::LearnTopics() {
 	}
 	tm->end();
 	printf("\tIteration: %d last %lf seconds.\n", iter, tm->getTime());
+
+	ParameterSet = true;
 }
 
 double* VariationalBayes::getPhi() {
 	double* p_phi = new double[W*K];
+
+	if(!ParameterSet) {
+		printf("Please call LearnTopic() first.\n");
+		return NULL;
+	}
+	
 	for(int w = 0; w < W; w++) {
 		for(int k = 0; k < K; k++) {
 			p_phi[w*K+k] = exp(p_log_phi[w*K+k]);
@@ -274,5 +282,10 @@ double* VariationalBayes::getPhi() {
 }
 
 double* VariationalBayes::getTheta() {
+	if(!ParameterSet) {
+		printf("Please call LearnTopic() first.\n");
+		return NULL;
+	}
+
 	return p_theta;
 }

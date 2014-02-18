@@ -14,8 +14,6 @@ class sBP : public LdaBase {
 		sBP(string path, int k, int t, double alpha, double beta);
 		~sBP();
 		void LearnTopics();
-		double* getPhi();
-		double* getTheta();
 };
 
 /* asynchronous Belief Propagation */
@@ -28,11 +26,9 @@ class aBP : public LdaBase {
 		aBP(string path, int k, int t, double alpha, double beta);
 		~aBP();
 		void LearnTopics();
-		double* getPhi();
-		double* getTheta();
 };
 
-/* residual Belief Propagation ---- residual accumulate by documents */
+/* residual Belief Propagation ---- residual accumulated by documents */
 class RBP_doc : public LdaBase {
 	private:
 		double *residual;
@@ -45,7 +41,20 @@ class RBP_doc : public LdaBase {
 		RBP_doc(string path, int k, int t, double alpha, double beta);
 		~RBP_doc();
 		void LearnTopics();
-		double* getPhi();
-		double* getTheta();
+};
+
+/* residual Belief Propagation ---- residual accumulated by vocabulary */
+class RBP_voc : public LdaBase {
+	private:
+		double *residual;
+		double *mu_new;
+		int *seq;
+
+		/* functions */
+		void init();
+	public:
+		RBP_voc(string path, int k, int t, double alpha, double beta);
+		~RBP_voc();
+		void LearnTopics();
 };
 #endif

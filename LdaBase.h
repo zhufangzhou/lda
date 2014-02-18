@@ -36,8 +36,8 @@ class LdaBase {
 		LdaBase(string path, int k, int t, double alpha, double beta, bool document_major);
 		~LdaBase();
 		virtual void LearnTopics() = 0;
-		virtual double* getTheta() = 0;
-		virtual double* getPhi() = 0;
+		virtual double* getTheta();
+		virtual double* getPhi();
 };
 
 #endif

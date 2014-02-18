@@ -161,35 +161,3 @@ void GibbsSampling::LearnTopics() {
 	printf("Learning finished. Using time %.3lf seconds.\n", tm->getTime());
 	ParameterSet = true;
 }
-
-double* GibbsSampling::getTheta() {
-	double *p_theta = new double[W*K];
-
-	if(!ParameterSet) {
-		printf("Please call LearnTopic() first.\n");
-		return NULL;
-	}
-
-	for(int w = 0; w < W; w++) {
-		for(int k = 0; k < K; k++) {
-			p_theta[w*K+k] = (phi[w*K+k]+BETA) / (phitot[k]+WBETA);
-		}
-	}
-	return p_theta;
-}
-
-double* GibbsSampling::getPhi() {
-	double *p_phi = new double[D*K];
-	
-	if(!ParameterSet) {
-		printf("Please call LearnTopic() first.\n");
-		return NULL;
-	}
-
-	for(int d = 0; d < D; d++) {
-		for(int k = 0; k < K; k++) {
-			p_phi[d*K+k] = (theta[d*K+k]+ALPHA) / (thetatot[d]+KALPHA);
-		}
-	}
-	return p_phi;
-}
