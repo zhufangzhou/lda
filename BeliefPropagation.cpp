@@ -5,7 +5,7 @@
  * sBP implemetation 
  */
 
-sBP::sBP(string path, int k, int t, double alpha, double beta):LdaBase(path, k, t, alpha, beta){
+sBP::sBP(string path, int k, int t, double alpha, double beta):LdaBase(path, k, t, alpha, beta, true){
 	
 }
 
@@ -142,7 +142,7 @@ double* sBP::getTheta() {
 /*
  * aBP implementation
  */
-aBP::aBP(string path, int k, int t, double alpha, double beta):LdaBase(path, k, t, alpha, beta) {
+aBP::aBP(string path, int k, int t, double alpha, double beta):LdaBase(path, k, t, alpha, beta, true) {
 
 }
 
@@ -270,7 +270,7 @@ double* aBP::getTheta() {
 /*
  * RBP_doc implementation ---- residual accumulate by documents
  */
-RBP_doc::RBP_doc(string path, int k, int t, double alpha, double beta):LdaBase(path, k, t, alpha, beta) {
+RBP_doc::RBP_doc(string path, int k, int t, double alpha, double beta):LdaBase(path, k, t, alpha, beta, true) {
 	residual = NULL;
 	mu_new = NULL;
 	seq = NULL;

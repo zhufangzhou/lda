@@ -1,7 +1,7 @@
 #include "GibbsSampling.h"
 #include "util.h"
 
-GibbsSampling::GibbsSampling(string path, int k, int t, int burn_in/*, int sample_lag*/, double alpha, double beta):LdaBase(path, k, t, alpha, beta) {
+GibbsSampling::GibbsSampling(string path, int k, int t, int burn_in/*, int sample_lag*/, double alpha, double beta):LdaBase(path, k, t, alpha, beta, true) {
 	BURN_IN = burn_in;
 //	SAMPLE_LAG = sample_lag;
 	tokens = 0;

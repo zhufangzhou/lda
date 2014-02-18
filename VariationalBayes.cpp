@@ -1,7 +1,7 @@
 #include "util.h"
 #include "VariationalBayes.h"
 
-VariationalBayes::VariationalBayes(string path, int k, int t, double alpha, double beta, double em_converged, double var_converged):LdaBase(path, k, t, alpha, beta){
+VariationalBayes::VariationalBayes(string path, int k, int t, double alpha, double beta, double em_converged, double var_converged):LdaBase(path, k, t, alpha, beta, true){
 	p_log_phi = NULL;
 	p_theta = NULL;
 	var_gamma = NULL;

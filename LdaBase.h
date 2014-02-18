@@ -31,9 +31,9 @@ class LdaBase {
 		string path;
 
 		// Functions
-		void ReadData(string path);
+		void ReadData(string path, bool document_major);			// read dataset which is document major
 	public:
-		LdaBase(string path, int k, int t, double alpha, double beta);
+		LdaBase(string path, int k, int t, double alpha, double beta, bool document_major);
 		~LdaBase();
 		virtual void LearnTopics() = 0;
 		virtual double* getTheta() = 0;

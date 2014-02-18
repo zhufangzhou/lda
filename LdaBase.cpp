@@ -4,7 +4,7 @@
 /*
  * Constructors
  */
-LdaBase::LdaBase(string path, int k, int t, double alpha, double beta) {
+LdaBase::LdaBase(string path, int k, int t, double alpha, double beta, bool document_major) {
 	this->path = path;
 	K = k;
 	T = t;
@@ -22,7 +22,7 @@ LdaBase::LdaBase(string path, int k, int t, double alpha, double beta) {
 	ir = NULL;
 	jc = NULL;
 	pr = NULL;
-	ReadData(path);
+	ReadData(path, document_major);
 }
 
 /*
@@ -66,10 +66,10 @@ LdaBase::~LdaBase() {
 /*
  * Read data from dataset
  */
-void LdaBase::ReadData(string path) {
+void LdaBase::ReadData(string path, bool document_major) {
 	FILE *fp = fopen(path.c_str(), "r"); 	
 	char line[MAXLEN], *pch;
-	int nnz;
+	int nnz, line_count;
 
 	if(fp == NULL) {
 		fprintf(stderr, "**********Text file cannot be found.**********\n");
@@ -109,14 +109,15 @@ void LdaBase::ReadData(string path) {
 	WBETA = W * BETA;
 	KALPHA = K * ALPHA;
 
+	line_count = document_major ? D : W;
 
-	jc = new int[D+1];
+	jc = new int[line_count+1];
 	ir = new int[NNZ];
 	pr = new double[NNZ];
 
 	nnz = 0;
-	for(int d = 0; d < D; d++) {
-		jc[d] = nnz;
+	for(int i = 0; i < line_count; i++) {
+		jc[i] = nnz;
 		if(fgets(line, sizeof(line), fp) == NULL) break;
 		pch = strtok(line, " ");
 		if((pch != NULL) && (atoi(pch) != 0)) {
@@ -136,5 +137,5 @@ void LdaBase::ReadData(string path) {
 			}
 		}
 	}
-	jc[D] = nnz;
+	jc[line_count] = nnz;
 }
