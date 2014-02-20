@@ -104,7 +104,7 @@ int GibbsSampling::sampleTopic(int token) {
 	}
 	
 
-	// cumulate the prob
+	// cumulate the probability
 	for(int k = 1; k < K; k++) p[k] += p[k-1];
 
 	// generate a random number from 0-sum(p)
@@ -134,10 +134,15 @@ void GibbsSampling::LearnTopics() {
 	init();
 
 	/* begin sample */
-	for(int t = 0; t < T; t++) {
+	for(int t = 1; t <= T; t++) {
 		
+		for(int i = 0; i < tokens; i++) {
+			topic = sampleTopic(i);
+			z[i] = topic;
+		}
+
 		// calculate perplexity
-		if((t % 10 == 0) && (t != 0)) {
+		if(t % 10 == 0) {
 			perplexity = 0.0;
 			for(int i = 0; i < tokens; i++) {
 				w = wd[i];
@@ -149,11 +154,6 @@ void GibbsSampling::LearnTopics() {
 				perplexity -= log(totprob);
 			}
 			printf("Iteration %d of %d:\t%.5lf\n", t, T, exp(perplexity/tokens));
-		}
-
-		for(int i = 0; i < tokens; i++) {
-			topic = sampleTopic(i);
-			z[i] = topic;
 		}
 	}
 
