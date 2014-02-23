@@ -4,6 +4,7 @@
 #include "LdaBase.h"
 #include "util.h"
 
+/* batch Variational Bayes */
 class VariationalBayes : public LdaBase {
 	private:
 		// variables
@@ -33,5 +34,18 @@ class VariationalBayes : public LdaBase {
 		double* getPhi();
 		double* getTheta();
 };
+
+/* synchronous Collapsed Variational Bayes */
+/*class sCVB : public LdaBase {
+	private:
+		int *wd;
+		int *doc;
+
+		void init();
+	public:
+		sCVB(string path, int k, int t, double alpha, double beta);
+		~sCVB();
+		void LearnTopics();
+};*/
 
 #endif

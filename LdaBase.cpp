@@ -124,6 +124,7 @@ void LdaBase::ReadData(string path, bool document_major) {
 			ir[nnz] = atoi(pch) - 1;
 			pch = strtok(NULL, " ");
 			pr[nnz] = atof(pch);
+			tokens += (int)pr[nnz];					// count tokens		
 			nnz++;
 		}
 
@@ -133,6 +134,7 @@ void LdaBase::ReadData(string path, bool document_major) {
 				ir[nnz] = atoi(pch) - 1;
 				pch = strtok(NULL, " ");
 				pr[nnz] = atof(pch);
+				tokens += (int)pr[nnz];				// count tokens
 				nnz++;
 			}
 		}

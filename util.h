@@ -16,6 +16,7 @@ using namespace std;
 #define MAXLEN 88888				// max characters in one line
 #define max(a,b) ((a)>(b)?(a):(b))
 #define min(a,b) ((a)<(b)?(a):(b))
+#define SQUARE(a) ((a) * (a))
 
 class myTimer {
 	private:
@@ -32,7 +33,9 @@ class myTimer {
 double log_sum(double log_a, double log_b);
 double digamma(double x);
 /* sort in descend order, a little bit different from common quick_sort */
-void quick_sort(double *value, int *seq, int left, int right);
+void quick_sort_des(double *value, int *seq, int left, int right);
+void quick_sort_asc(double *value, int *seq, int left, int right);
+void quick_sort_asc(int *value, int *seq, int left, int right);
 
 
 #endif

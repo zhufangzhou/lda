@@ -36,8 +36,6 @@ void sBP::init() {
 			w = ir[i];
 			x = pr[i];
 			
-			tokens += x;						// accumulate tokens 
-
 			/* randomly pick a topic */
 			topic = rand() % K;
 			mu[i*K+topic] = 1.0;				// assign this word the topic
@@ -81,7 +79,6 @@ void sBP::LearnTopics() {
 		memset(phi, 0, sizeof(double)*W*K);
 		memset(phitot, 0, sizeof(double)*K);
 		memset(theta, 0, sizeof(double)*D*K);
-		memset(thetatot, 0, sizeof(double)*D);
 		for(int d = 0; d < D; d++) {
 			for(int i = jc[d]; i < jc[d+1]; i++) {
 				w = ir[i];
@@ -90,7 +87,6 @@ void sBP::LearnTopics() {
 					phi[w*K+k] += x*mu[i*K+k];
 					phitot[k] += x*mu[i*K+k];
 					theta[d*K+k] += x*mu[i*K+k];
-					thetatot[d] += x*mu[i*K+k];
 				}
 			}
 		}
@@ -156,8 +152,6 @@ void aBP::init() {
 			w = ir[i];
 			x = pr[i];
 			
-			tokens += x;						// accumulate tokens 
-
 			/* randomly pick a topic */
 			topic = rand() % K;
 			mu[i*K+topic] = 1.0;				// assign this word the topic
@@ -192,7 +186,6 @@ void aBP::LearnTopics() {
 					phi[w*K+k] -= x*mu[i*K+k];
 					phitot[k] -= x*mu[i*K+k];
 					theta[d*K+k] -= x*mu[i*K+k];
-					thetatot[d] -= x*mu[i*K+k];
 					mu[i*K+k] = (phi[w*K+k] + BETA) / (phitot[k] + WBETA) * (theta[d*K+k] + ALPHA);
 					mu_tot += mu[i*K+k];
 				}
@@ -202,7 +195,6 @@ void aBP::LearnTopics() {
 					phi[w*K+k] += x*mu[i*K+k];
 					phitot[k] += x*mu[i*K+k];
 					theta[d*K+k] += x*mu[i*K+k];
-					thetatot[d] += x*mu[i*K+k];
 				}
 			}
 		}
@@ -286,8 +278,6 @@ void RBP_doc::init() {
 			w = ir[i];
 			x = pr[i];
 			
-			tokens += x;						// accumulate tokens 
-
 			/* randomly pick a topic */
 			topic = rand() % K;
 			mu[i*K+topic] = 1.0;				// assign this word the topic
@@ -325,7 +315,6 @@ void RBP_doc::LearnTopics() {
 					phi[w*K+k] -= x*mu[i*K+k];
 					phitot[k] -= x*mu[i*K+k];
 					theta[d*K+k] -= x*mu[i*K+k];
-					thetatot[d] -= x*mu[i*K+k];
 					/* update mu stored in mu_new */
 					mu_new[k] = (phi[w*K+k] + BETA) / (phitot[k] + WBETA) * (theta[d*K+k] + ALPHA);
 					mu_tot += mu_new[k];
@@ -339,13 +328,12 @@ void RBP_doc::LearnTopics() {
 					phi[w*K+k] += x*mu[i*K+k];
 					phitot[k] += x*mu[i*K+k];
 					theta[d*K+k] += x*mu[i*K+k];
-					thetatot[d] += x*mu[i*K+k];
 				}
 			}
 		}
 
 		/* sort residual and update seq to get the scan schedule in next iteration */
-		quick_sort(residual, seq, 0, D);	
+		quick_sort_des(residual, seq, 0, D);	
 
 		/* compute perplexity */
 		if(iter % 10 == 0) {
@@ -427,8 +415,6 @@ void RBP_voc::init() {
 			d = ir[i];
 			x = pr[i];
 			
-			tokens += x;						// accumulate tokens 
-
 			/* randomly pick a topic */
 			topic = rand() % K;
 			mu[i*K+topic] = 1.0;				// assign this word the topic
@@ -466,7 +452,6 @@ void RBP_voc::LearnTopics() {
 					phi[w*K+k] -= x*mu[i*K+k];
 					phitot[k] -= x*mu[i*K+k];
 					theta[d*K+k] -= x*mu[i*K+k];
-					thetatot[d] -= x*mu[i*K+k];
 					/* update mu stored in mu_new */
 					mu_new[k] = (phi[w*K+k] + BETA) / (phitot[k] + WBETA) * (theta[d*K+k] + ALPHA);
 					mu_tot += mu_new[k];
@@ -480,13 +465,12 @@ void RBP_voc::LearnTopics() {
 					phi[w*K+k] += x*mu[i*K+k];
 					phitot[k] += x*mu[i*K+k];
 					theta[d*K+k] += x*mu[i*K+k];
-					thetatot[d] += x*mu[i*K+k];
 				}
 			}
 		}
 
 		/* sort residual and update seq to get the scan schedule in next iteration */
-		quick_sort(residual, seq, 0, W);	
+		quick_sort_des(residual, seq, 0, W);	
 
 		/* compute perplexity */
 		if(iter % 10 == 0) {
