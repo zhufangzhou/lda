@@ -164,14 +164,18 @@ void GibbsSampling::LearnTopics() {
 fastGibbsSampling::fastGibbsSampling(string path, int k, int t, int burn_in, double alpha, double beta):LdaBase(path, k, t, alpha, beta, true) {
 	BURN_IN = burn_in;
 
+	min_phitot = 0.0;
 	wd = NULL;
 	doc = NULL;
 	z = NULL;
 	sum_p = NULL;
 	phi_norm = NULL;
 	theta_norm = NULL;
-	phitot_idx = NULL;
-	phitot_ridx = NULL;
+	p = NULL;
+	theta_idx = NULL;
+	theta_ridx = NULL;
+	d_last = NULL;
+	w_last = NULL;
 }
 
 fastGibbsSampling::~fastGibbsSampling() {
@@ -199,13 +203,25 @@ fastGibbsSampling::~fastGibbsSampling() {
 		delete theta_norm;
 		theta_norm = NULL;
 	}
-	if(phitot_idx != NULL) {
-		delete phitot_idx;
-		phitot_idx = NULL;
+	if(theta_idx != NULL) {
+		delete theta_idx;
+		theta_idx = NULL;
 	}
-	if(phitot_ridx != NULL) {
-		delete phitot_ridx;
-		phitot_ridx = NULL;
+	if(theta_ridx != NULL) {
+		delete theta_ridx;
+		theta_ridx = NULL;
+	}
+	if(p != NULL) {
+		delete p;
+		p = NULL;
+	}
+	if(d_last != NULL) {
+		delete d_last;
+		d_last = NULL;
+	}
+	if(w_last != NULL) {
+		delete w_last;
+		w_last = NULL;
 	}
 }
 
@@ -221,14 +237,20 @@ void fastGibbsSampling::init() {
 	memset(phitot, 0, sizeof(double)*K);
 	theta = new double[D*K];
 	memset(theta, 0, sizeof(double)*D*K);
+	theta_idx = new int[D*K];
+	theta_ridx = new int[D*K];
 	thetatot = new double[D];
 	memset(thetatot, 0, sizeof(double)*D);
 	sum_p = new double[K];
 	memset(sum_p, 0, sizeof(double)*K);
 
+	p = new double[K];
+	memset(p, 0, sizeof(double)*K);
+
 	wd = new int[tokens];
 	doc = new int[tokens];
 	z = new int[tokens];
+	memset(z, 0, sizeof(int)*tokens);
 
 	k = 0;
 	for(int d = 0; d < D; d++) {
@@ -263,144 +285,189 @@ void fastGibbsSampling::init() {
 	memset(phi_norm, 0, sizeof(double)*W);
 	theta_norm = new double[D];
 	memset(theta_norm, 0, sizeof(double)*D);
-	phitot_idx = new int[K];
-	phitot_ridx = new int[K];
-	for(int k = 0; k < K; k++) phitot_idx[k] = phitot_ridx[k] = k;
 
-	for(int k = 0; k < K; k++) {
-		for(int w = 0; w < W; w++) {
-			phi_norm[w] += SQUARE(phi[w*K+k] + BETA);
-		}
-		for(int d = 0; d < D; d++) {
-			theta_norm[d] += SQUARE(theta[d*K+k] + ALPHA);
-		}
-	}
-
-	quick_sort_des(phitot, phitot_idx, 0, K);
-	quick_sort_asc(phitot_idx, phitot_ridx, 0, K);
+	w_last = new int[W];
+	memset(w_last, 0xff, sizeof(int)*W);
+	d_last = new int[D];
+	memset(d_last, 0xff, sizeof(int)*D);
 
 
+	/* initial min_phitot */
+	min_phitot = phitot[0];
+	for(int k = 0; k < K; k++) min_phitot = min(min_phitot, phitot[k]);
 }
 
-void fastGibbsSampling::update_sort(int n, double *value, int *idx, int *ridx, int id, bool des) {
+void fastGibbsSampling::update_sort(int n, double *value, int *idx, int *ridx, int ip, int im) {
 	int tmp;
-	
-	if(des) {
-		// update after decrease
-		id = ridx[id];
-		while((id < n-1) && (value[idx[id]] < value[idx[id+1]])) {
-			// update idx
-			tmp = idx[id];
-			idx[id] = idx[id+1];
-			idx[id+1] = tmp;
+		
+	/*
+	 * Increment
+	 * did ++ get bigger than prev
+	 */
+	ip = ridx[ip];
+	while((ip > 0) && (value[idx[ip]] > value[idx[ip-1]])) {
+		/* swap idx */
+		tmp = idx[ip];
+		idx[ip] = idx[ip-1];
+		idx[ip-1] = tmp;
 
-			// update ridx
-			tmp = ridx[idx[id]];
-			ridx[idx[id]] = ridx[idx[id+1]];
-			ridx[idx[id+1]] = tmp;
+		/* swap ridx */
+		tmp = ridx[idx[ip]];
+		ridx[idx[ip]] = ridx[idx[ip-1]];
+		ridx[idx[ip-1]] = tmp;
+	}
 
-			id++;
-		}
-	} else {
-		// update after increase
-		id = ridx[id];
-		while((id > 0) && (value[idx[id]] > value[idx[id-1]])) {
-			// update idx
-			tmp = idx[id];
-			idx[id] = idx[id-1];
-			idx[id-1] = tmp;
+	/*
+	 * Decrement
+	 * did -- get smaller than next
+	 */
+	im = ridx[im];
+	while((im < n) && (value[idx[im]] < value[idx[im+1]])) {
+		/* swap idx */
+		tmp = idx[im];
+		idx[im] = idx[im+1];
+		idx[im+1] = tmp;
 
-			// update ridx
-			tmp = ridx[idx[id]];
-			ridx[idx[id]] = ridx[idx[id-1]];
-			ridx[idx[id-1]] = tmp;
-		}
+		/* swap ridx */
+		tmp = ridx[idx[im]];
+		ridx[idx[im]] = ridx[idx[im+1]];
+		ridx[idx[im+1]] = tmp;
 	}
 }
 
-int fastGibbsSampling::sampleTopic(int token) {
-	int w, d, topic, topic_new;
-	double u, tp, v_phi_norm, v_theta_norm, v_phitot, zk = 0.0, zk_old, r;
+int fastGibbsSampling::sampleTopic(int token, int iter) {
+	int w, d, topic;
+	double p_tot, r, u, v_phi_norm, v_theta_norm, prob, zk = 0.0, zk_old;
 
+	/* set up random seed */
 	srand((unsigned)time(0));
 
+	/* get current token infomation */
 	w = wd[token];
 	d = doc[token];
-
 	topic = z[token];
 
-	/* compute phi_norm and theta_norm */
-	phi_norm[w] -= 2*(phi[w*K + topic] + BETA) - 1;
-	theta_norm[d] -= 2*(theta[d*K + topic] + ALPHA) - 1;
-
-	// exclude current token
-	phi[w*K + topic]--;
-	phitot[topic]--;
+	/* substract current token from counts before sample */
+	phi[w*K+ topic]--;
 	theta[d*K + topic]--;
+	phitot[topic]--;
 
-	update_sort(K, phitot, phitot_idx, phitot_ridx, topic, true);
+	if(iter == 1) { /* standard sample */
+		/* set up phitot norm */
+		min_phitot = min(min_phitot, phitot[topic]);
 
-	v_phi_norm = phi_norm[w];
-	v_theta_norm = theta_norm[d];
-	v_phitot = phitot[phitot_idx[K-1]]+WBETA;
+		/* sort theta (each K-theta array sort at the end of scanning its doc)*/
+		if((token == tokens - 1) || (doc[token] != doc[token+1])) {
+			dsort(K, theta + d*K, -1, theta_idx + d*K); /* descending */
+			isort(K, theta_idx + d*K, 1, theta_ridx + d*K); /* ascending */
+		}
 
-	memset(sum_p, 0, sizeof(double)*K);	
-	u = rand() / (double)(RAND_MAX);
+		/* set up norms */
+		phi_norm[w] = 0;
+		theta_norm[d] = 0;
+		for(int k = 0; k < K; k++) {
+			phi_norm[w] += SQUARE(phi[w*K+k] + BETA);
+			theta_norm[d] += SQUARE(theta[d*K+k] + ALPHA);
+		}
 
-	for(int k = 0; k < K; k++) {
-		tp = (phi[w*K+k]+BETA)/(phitot[k]+WBETA)*(theta[d*K+k]+ALPHA);	
-		if(k == 0) sum_p[k] = tp;
-		else sum_p[k] = sum_p[k-1] + tp;
+		p_tot = 0.0;
+		for(int k = 0; k < K; k++) {
+			p[k] = (phi[w*K+k] + BETA) / (phitot[k] + WBETA) * (theta[d*K+k] + ALPHA);	
+			p_tot += p[k];
+		}
 
-		/* phi_norm(l+1:K) and theta_norm(l+1:K) */
-		v_phi_norm -= SQUARE(phi[w*K+k] + BETA);
-		v_theta_norm -= SQUARE(theta[d*K+k] + ALPHA);
-
-		zk_old = zk;
-		zk = sum_p[k] + sqrt(v_phi_norm*v_theta_norm) / v_phitot;
-
-		r = u*zk;
-		if(r > sum_p[k]) continue;
-		else {
-			if((k == 0) || (r > sum_p[k-1])) {
+		// sample a topic 
+		r = (rand() / (double)RAND_MAX) * p_tot;
+		for(int k = 0; k < K; k++) {
+			if(r < p[k]) {
 				topic_new = k;
 				break;
 			} else {
-				u = (u*zk_old - sum_p[k-1]) * zk / (zk_old - zk);
-				for(int kk = 0; kk < k; kk++) {
-					if(sum_p[kk] >= u) {
-						topic_new = kk;
-						break;
-					}
-				}
-				break;
+				r -= p[k];
 			}
 		}
+
+	} else { /* fast sample */
+		/* prepare phitot_norm */
+		if(topic_new != topic) {
+			min_phitot = min(min_phitot, phitot[topic]);
+			min_phitot = min(min_phitot, phitot[topic_new]);
+		}
 		
+		/* prepare phi_norm */
+		if(w_last[w] != topic) {
+			phi_norm[w] += 2*(phi[w*K+ w_last[w]] - phi[w*K + topic] - 1);
+		}
+		v_phi_norm = phi_norm[w];
+
+		/* prepare theta_norm */
+		if(d_last[d] != topic) {
+			theta_norm[d] += 2*(theta[d*K + d_last[d]] - theta[d*K + topic] - 1);
+			update_sort(K, theta+d*K, theta_idx+d*K, theta_ridx+d*K, d_last[d], topic);
+		}
+		v_theta_norm = theta_norm[d];
+
+		u = rand() / (double)RAND_MAX;
+		for(int j = 0, k; j < K; j++) {
+			/* scan topic in theta order descending */
+			k = theta_idx[d*K + j];
+			prob = (phi[w*K+k] + BETA) / (phitot[k] + WBETA) * (theta[d*K+k] + ALPHA);	
+
+			if(j == 0) sum_p[j] = prob;
+			else sum_p[j] = sum_p[j-1] + prob;
+
+			/* update current norm-based bounds */
+			v_phi_norm -= SQUARE(phi[w*K+k] + BETA);
+			v_theta_norm -= SQUARE(theta[d*K+k] + ALPHA);
+
+			/* make norm bigger or eaqul to zero */
+			v_phi_norm = v_phi_norm < 0 ? 0: v_phi_norm;
+			v_theta_norm = v_theta_norm < 0 ? 0 : v_theta_norm;
+
+			zk_old = zk;
+			zk = sum_p[j] + sqrt(v_phi_norm*v_theta_norm) / (min_phitot+ WBETA);
+
+			if(u*zk > sum_p[j]) continue; /* conitnue to next k */
+			else {
+				if((j == 0) || (u*zk > sum_p[j-1])) {
+					topic_new = theta_idx[d*K + j];
+					break;
+				} else {
+					u = (u*zk_old - sum_p[j-1]) * zk / (zk_old - zk);
+					for(int jj = 0; jj < j; jj++) {
+						if(sum_p[jj] >= u) {
+							topic_new = theta_idx[d*K + jj];
+							break;
+						}
+					}
+					break;
+				}
+			}
+		}
 	}
 
-	phi_norm[w] += 2*(phi[w*K+topic_new] + BETA) + 1;
-	theta_norm[d] += 2*(phi[d*K+topic_new] + ALPHA) + 1;
-
-	// increase current token 
 	phi[w*K + topic_new]++;
-	phitot[topic_new]++;
 	theta[d*K + topic_new]++;
+	phitot[topic_new]++;
 
-	update_sort(K, phitot, phitot_idx, phitot_ridx, topic_new, false);
+	w_last[w] = topic_new;
+	d_last[d] = topic_new;
 	return topic_new;
 }
 
 void fastGibbsSampling::LearnTopics() {
 	int w, d, topic;
 	double x, perplexity, mu_tot;
+	myTimer *tm = new myTimer();
+
+	tm->start();
 
 	init();
 
 	for(int iter = 1; iter <= T; iter++) {
 
 		for(int i = 0; i < tokens; i++) {
-			topic = sampleTopic(i);
+			topic = sampleTopic(i, iter);
 			z[i] = topic;
 		}
 
@@ -420,6 +487,7 @@ void fastGibbsSampling::LearnTopics() {
 		}
 	}
 
-	init();
-
+	tm->end();
+	printf("Learning finished. Using time %.3lf seconds.\n", tm->getTime());
+	ParameterSet = true;
 }

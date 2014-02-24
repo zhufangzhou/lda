@@ -32,6 +32,10 @@ double myTimer::getTime() {
 
 //==========================================================================
 
+/* data used for isort*/
+static int *icomp_vec;
+static double *dcomp_vec;
+
 /*
  * From NIST Handbook of Mathematical Functions, using formula 5.11.2
  */
@@ -59,81 +63,38 @@ double log_sum(double log_a, double log_b) {
 	}
 }
 
-/*
- * quick_sort (descend order)
- */
-void quick_sort_des(double *value, int *seq, int left, int right) {
-	int pivot, l = left+1, r = right-1, tmp, mid;
-	if(right-left <= 1) return ;
-	else {
-		/* swap middle to left and choose middle as pivot */
-		mid = (left + right) / 2;
-		tmp = seq[mid];
-		seq[mid] = seq[left];
-		seq[left] = tmp;
-
-		pivot = seq[left];
-		while(l <= r) {
-			while(l<=r && value[seq[l]] > value[pivot]) l++;
-			while(l<=r && value[seq[r]] < value[pivot]) r--;
-			if(l<=r) {
-				tmp = seq[l];
-				seq[l] = seq[r];
-				seq[r] = tmp;
-			}
-		}
-		tmp = seq[r];
-		seq[r] = seq[left];
-		seq[left] = tmp;
-		quick_sort_des(value, seq, left, r);
-		quick_sort_des(value, seq, r+1, right);
-	}
+static int icomp(const void *a, const void *b) {
+	int i = *(int*)a, j = *(int*)b;
+	return icomp_vec[i] - icomp_vec[j];
 }
 
-void quick_sort_asc(double *value, int *seq, int left, int right) {
-	int pivot, l = left+1, r = right-1, tmp, mid;
-	if(right-left <= 1) return ;
-	else {
-		/* swap middle to left and choose middle as pivot */
-
-		pivot = seq[left];
-		while(l <= r) {
-			while(l<=r && value[seq[l]] < value[pivot]) l++;
-			while(l<=r && value[seq[r]] > value[pivot]) r--;
-			if(l<=r) {
-				tmp = seq[l];
-				seq[l] = seq[r];
-				seq[r] = tmp;
-			}
-		}
-		tmp = seq[r];
-		seq[r] = seq[left];
-		seq[left] = tmp;
-		quick_sort_asc(value, seq, left, r);
-		quick_sort_asc(value, seq, r+1, right);
+/* dir = +1 ascending order, dir = -1 descending order */
+void isort(int n, int *value, int dir, int *idx) {
+	icomp_vec = new int[n];
+	for(int i = 0; i < n; i++) {
+		icomp_vec[i] = dir * value[i];
+		idx[i] = i;
 	}
+	qsort(idx, n, sizeof(int), icomp);
+
+	delete icomp_vec;
+	icomp_vec = NULL;
 }
 
-void quick_sort_asc(int *value, int *seq, int left, int right) {
-	int pivot, l = left+1, r = right-1, tmp, mid;
-	if(right-left <= 1) return ;
-	else {
-		/* swap middle to left and choose middle as pivot */
+static int dcomp(const void *a, const void *b) {
+	int i = *(int*)a, j = *(int*)b;
+	return dcomp_vec[i] > dcomp_vec[j] ? 1 : -1;
+}
 
-		pivot = seq[left];
-		while(l <= r) {
-			while(l<=r && value[seq[l]] < value[pivot]) l++;
-			while(l<=r && value[seq[r]] > value[pivot]) r--;
-			if(l<=r) {
-				tmp = seq[l];
-				seq[l] = seq[r];
-				seq[r] = tmp;
-			}
-		}
-		tmp = seq[r];
-		seq[r] = seq[left];
-		seq[left] = tmp;
-		quick_sort_asc(value, seq, left, r);
-		quick_sort_asc(value, seq, r+1, right);
+/* dir = +1 ascending order, dir = -1 descending order */
+void dsort(int n, double *value, int dir, int *idx) {
+	dcomp_vec = new double[n];
+	for(int i = 0; i < n; i++) {
+		dcomp_vec[i] = dir * value[i];
+		idx[i] = i;
 	}
+	qsort(idx, n, sizeof(int), dcomp);
+
+	delete dcomp_vec;
+	dcomp_vec = NULL;
 }

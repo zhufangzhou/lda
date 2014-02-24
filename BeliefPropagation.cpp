@@ -333,7 +333,7 @@ void RBP_doc::LearnTopics() {
 		}
 
 		/* sort residual and update seq to get the scan schedule in next iteration */
-		quick_sort_des(residual, seq, 0, D);	
+		dsort(D, residual, -1, seq);
 
 		/* compute perplexity */
 		if(iter % 10 == 0) {
@@ -470,7 +470,7 @@ void RBP_voc::LearnTopics() {
 		}
 
 		/* sort residual and update seq to get the scan schedule in next iteration */
-		quick_sort_des(residual, seq, 0, W);	
+		dsort(W, residual, -1, seq);
 
 		/* compute perplexity */
 		if(iter % 10 == 0) {

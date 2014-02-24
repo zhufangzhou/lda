@@ -30,16 +30,22 @@ class fastGibbsSampling : public LdaBase {
 		int *wd;
 		int *doc;
 
+		int topic_new;
+
 		double *sum_p;
 		double *phi_norm;
 		double *theta_norm;
-		int *phitot_idx;
-		int *phitot_ridx;
+		double *p;
+		int *theta_idx;
+		int *theta_ridx;
+		int *d_last;
+		int *w_last;
+		double min_phitot;
 
 		/* functions */
 		void init();
-		int sampleTopic(int token);	
-		void update_sort(int n, double *value, int *idx, int *ridx, int topic, bool des);
+		int sampleTopic(int token, int iter);	
+		void update_sort(int n, double *value, int *idx, int *ridx, int ip, int im);
 	public:
 		fastGibbsSampling(string path, int k, int t, int burn_in, double alpha, double beta);
 		~fastGibbsSampling();

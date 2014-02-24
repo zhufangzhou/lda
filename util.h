@@ -32,10 +32,10 @@ class myTimer {
 
 double log_sum(double log_a, double log_b);
 double digamma(double x);
+/* sorting function */
+void isort(int n, int *value, int dir, int *idx);
+void dsort(int n, double *value, int dir, int *idx);
 /* sort in descend order, a little bit different from common quick_sort */
-void quick_sort_des(double *value, int *seq, int left, int right);
-void quick_sort_asc(double *value, int *seq, int left, int right);
-void quick_sort_asc(int *value, int *seq, int left, int right);
 
 
 #endif
