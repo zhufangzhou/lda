@@ -68,7 +68,7 @@ LdaBase::~LdaBase() {
  */
 void LdaBase::ReadData(string path, bool document_major) {
 	FILE *fp = fopen(path.c_str(), "r"); 	
-	char line[MAXLEN], *pch;
+	char line[MAXLEN], *pch, *ret;
 	int nnz, line_count;
 
 	if(fp == NULL) {
@@ -77,7 +77,7 @@ void LdaBase::ReadData(string path, bool document_major) {
 	}
 
 	// get three integers --->   D  W  NNZ
-	fgets(line, sizeof(line), fp);
+	ret = fgets(line, sizeof(line), fp);
 	
 	pch = strtok(line, " ");
 	if((pch != NULL) && (atoi(pch) != 0)) {
@@ -143,32 +143,38 @@ void LdaBase::ReadData(string path, bool document_major) {
 }
 
 double* LdaBase::getPhi() {
-	double *p_phi = new double[D*K];
-	
+	double *p_phi = new double[W*K];
+	FILE *fp_phi = fopen("phi.txt", "w");	
+
 	if(!ParameterSet) {
 		printf("Please call LearnTopic() first.\n");
 		return NULL;
 	}
 
-	for(int d = 0; d < D; d++) {
+	fprintf(fp_phi, "%d\t%d\n", W, K);
+	for(int w = 0; w < W; w++) {
 		for(int k = 0; k < K; k++) {
-			p_phi[d*K+k] = (theta[d*K+k]+ALPHA) / (thetatot[d]+KALPHA);
+			p_phi[w*K+k] = (phi[w*K+k]+BETA) / (phitot[k]+WBETA);
+			fprintf(fp_phi, "%.4lf\n", p_phi[w*K+k]);
 		}
 	}
 	return p_phi;
 }
 
 double* LdaBase::getTheta() {
-	double *p_theta = new double[W*K];
+	double *p_theta = new double[D*K];
+	FILE *fp_theta = fopen("theta.txt", "w");
 
 	if(!ParameterSet) {
 		printf("Please call LearnTopic() first.\n");
 		return NULL;
 	}
 
-	for(int w = 0; w < W; w++) {
+	fprintf(fp_theta, "%d\t%d\n", D, K);
+	for(int d = 0; d < D; d++) {
 		for(int k = 0; k < K; k++) {
-			p_theta[w*K+k] = (phi[w*K+k]+BETA) / (phitot[k]+WBETA);
+			p_theta[d*K+k] = (theta[d*K+k]+ALPHA) / (thetatot[d]+KALPHA);
+			fprintf(fp_theta, "%.4lf\n", p_theta[d*K+k]);
 		}
 	}
 	return p_theta;
